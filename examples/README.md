@@ -1,1 +1,1 @@
-I start to work in this files last year, but I was not using GitHub. I'm not working with this right now, so probably I've made changes in some files that could result in a bug somewhere else :)
+I've started to work in this files last year, but I was not using GitHub. I'm not working with this code right now, so probably I've been making changes in some files without testing all the rest and that could result in a bug somewhere else :)
