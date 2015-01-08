@@ -1,0 +1,158 @@
+<!-- 
+Remember to change the IP to the one used by the server!
+
+ -->
+<html>
+<meta charset="UTF-8"> 
+<head>
+    <title>
+        Controlling Baxter Through the Browser!
+    </title>
+<style>
+.garden {
+  position: relative;
+  width : 500px;
+  height: 500px;
+  /*top   : 50px;*/
+  left  : 50px;
+  border: 5px solid #CCC;
+  border-radius: 10px;
+}
+
+.ball {
+  position: absolute;
+  top   : 90px;
+  left  : 90px;
+  width : 50px;
+  height: 50px;
+  background: green;
+  border-radius: 100%;
+}
+
+.output_div {
+  position: relative;
+/*  top   : 50px;
+  left  : 50px;*/
+}  
+
+.arrow {
+  position: absolute;
+  width : 50px;
+  height: 50px;
+}
+</style>
+</head>
+
+<body>
+<H1>Move your device to move Baxter arm!</H1> 
+
+<div>
+<div class="garden">
+<!--   <div class="ball"></div> -->
+  <img id="arrow" class="arrow" src="arrow.png">
+</div>
+
+<div class="output_div">
+    <pre>Sensor's data:</pre>
+    <pre class="output">Output1</pre>
+    <pre>Data sent:</pre>
+    <pre id="output2" class="output2">Output2</pre>
+</div>
+
+</div>
+
+<script type="text/javascript">
+
+var machine_address = "141.163.225.185"
+
+// var ball   = document.querySelector('.ball');
+var ball   = document.querySelector('.arrow');
+var garden = document.querySelector('.garden');
+var output = document.querySelector('.output');
+
+var maxX = garden.clientWidth  - ball.clientWidth;
+var maxY = garden.clientHeight - ball.clientHeight;
+
+var global_pitch = 0;
+var global_yaw = 0;
+
+time_period = 300;//in milliseconds
+
+var oReq = new XMLHttpRequest();
+
+function ajaxSuccess () {
+    var txt=document.getElementById("output2");
+    if (oReq.readyState == 4) {
+        txt.innerHTML = this.responseText;
+        // txt.innerHTML = "WORKS??";
+        }
+}
+
+oReq.onreadystatechange = ajaxSuccess;
+
+function send_data(){
+  oReq.open("GET", "http://" + machine_address + ":8080/~Guest/pitch_yaw.py?pitch="+global_pitch+"&yaw="+global_yaw, true);
+  oReq.send();
+}
+
+function handleOrientation(event) {
+  var y = event.beta;  // In degree in the range [-180,180]
+  var x = event.gamma; // In degree in the range [-90,90]
+
+  output.innerHTML  = "beta : " + x + "\n";
+  output.innerHTML += "gamma: " + y + "\n";
+
+
+  // 25 is half the size of the ball
+  // It center the positioning point to the center of the ball
+  var ball_top  = (maxY/2+(2*maxY*y/180 - 25));
+  var ball_left = (maxX/2+(maxX*x/90 - 25));
+   
+  var angle = 180*Math.atan2((ball_top-maxY/2),(ball_left-maxX/2))/(Math.PI);
+
+  if (ball_top>maxY){
+      ball_top=maxY;
+  }
+  
+  if (ball_top<0){
+      ball_top=0;
+  }
+
+  if (ball_left>maxX){
+      ball_left=maxX;
+  }
+  
+  if (ball_left<0){
+      ball_left=0;
+  }
+  // ball.style.top  = ball_top + "px";
+  // ball.style.left = ball_left + "px";
+
+  global_pitch = Math.round(ball_top);
+  global_yaw   = Math.round(ball_left);
+
+  transform(ball_left, ball_top, 90+angle, "arrow");
+
+}
+
+function transform(x, y, deg, elmt){
+my_elm = document.getElementById(elmt);
+my_elm.setAttribute(
+        "style", "transform:rotate(" + deg + "deg);"
+      + "-moz-transform: rotate(" + deg + "deg);"
+      + "-o-transform: rotate(" + deg + "deg);"
+      + "-webkit-transform:rotate(" + deg + "deg);"
+      + "-ms-transform:rotate("+ deg +"deg);"
+    );
+
+my_elm.style.top = y;
+my_elm.style.left = x;
+
+}
+
+window.addEventListener('deviceorientation', handleOrientation);
+window.setInterval(send_data, time_period);
+</script>
+</body>
+
+</html>
